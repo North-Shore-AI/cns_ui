@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Gradient for hexagonal background -->
+    <linearGradient id="hexGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7C3AED;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6D28D9;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Teal accent gradient -->
+    <linearGradient id="tealGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#14B8A6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0D9488;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Synthesis glow effect -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Shadow for depth -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#1F2937" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Outer hexagon background -->
+  <polygon
+    points="256,20 452,135 452,377 256,492 60,377 60,135"
+    fill="url(#hexGradient)"
+    filter="url(#shadow)"
+  />
+
+  <!-- Inner hexagon border -->
+  <polygon
+    points="256,45 428,148 428,364 256,467 84,364 84,148"
+    fill="none"
+    stroke="#C4B5FD"
+    stroke-width="2"
+    opacity="0.6"
+  />
+
+  <!-- Dialectical triad - representing Thesis, Antithesis, Synthesis -->
+
+  <!-- Thesis circle (top) -->
+  <circle cx="256" cy="140" r="35" fill="#14B8A6" filter="url(#glow)" opacity="0.9"/>
+  <text x="256" y="148" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">T</text>
+
+  <!-- Antithesis circle (bottom left) -->
+  <circle cx="170" cy="320" r="35" fill="#F97316" filter="url(#glow)" opacity="0.9"/>
+  <text x="170" y="328" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">A</text>
+
+  <!-- Synthesis circle (bottom right) - larger, emphasized -->
+  <circle cx="342" cy="320" r="40" fill="url(#tealGradient)" filter="url(#glow)"/>
+  <text x="342" y="328" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="18" font-weight="bold">S</text>
+
+  <!-- Connecting lines representing dialectical flow -->
+
+  <!-- Thesis to Antithesis -->
+  <line x1="230" y1="165" x2="195" y2="290" stroke="#C4B5FD" stroke-width="3" opacity="0.7"/>
+
+  <!-- Thesis to Synthesis -->
+  <line x1="282" y1="165" x2="317" y2="285" stroke="#C4B5FD" stroke-width="3" opacity="0.7"/>
+
+  <!-- Antithesis to Synthesis (curved path for synthesis emergence) -->
+  <path d="M 205 320 Q 256 380 307 320" stroke="#2DD4BF" stroke-width="4" fill="none" filter="url(#glow)"/>
+
+  <!-- Arrow pointing to synthesis -->
+  <polygon points="300,320 290,312 290,328" fill="#2DD4BF"/>
+
+  <!-- UI Dashboard elements -->
+
+  <!-- Top dashboard bar -->
+  <rect x="120" y="70" width="272" height="8" rx="4" fill="white" opacity="0.2"/>
+
+  <!-- Side metric bars -->
+  <rect x="95" y="200" width="8" height="60" rx="4" fill="#2DD4BF" opacity="0.6"/>
+  <rect x="95" y="270" width="8" height="40" rx="4" fill="#2DD4BF" opacity="0.4"/>
+
+  <rect x="409" y="200" width="8" height="50" rx="4" fill="#2DD4BF" opacity="0.5"/>
+  <rect x="409" y="260" width="8" height="70" rx="4" fill="#2DD4BF" opacity="0.6"/>
+
+  <!-- Bottom status indicators -->
+  <circle cx="200" cy="420" r="6" fill="#10B981"/>
+  <circle cx="256" cy="420" r="6" fill="#10B981"/>
+  <circle cx="312" cy="420" r="6" fill="#FBBF24"/>
+
+  <!-- CNS text label -->
+  <text x="256" y="240" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="28" font-weight="bold" letter-spacing="4">CNS</text>
+  <text x="256" y="265" text-anchor="middle" fill="#C4B5FD" font-family="Arial, sans-serif" font-size="12" font-weight="normal">DIALECTICAL UI</text>
+</svg>
