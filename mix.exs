@@ -71,8 +71,8 @@ defmodule CnsUi.MixProject do
       {:plug_cowboy, "~> 2.5"},
 
       # CNS ecosystem
-      {:cns, path: "../cns", optional: true},
-      {:tinkex, path: "../../../tinkex", optional: true},
+      {:cns, github: "North-Shore-AI/cns", optional: true},
+      {:tinkex, "0.1.0", optional: true},
 
       # Development and testing
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
