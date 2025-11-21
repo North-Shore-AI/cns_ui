@@ -72,7 +72,6 @@ defmodule CnsUi.MixProject do
 
       # CNS ecosystem
       {:cns, github: "North-Shore-AI/cns", optional: true},
-      {:tinkex, "0.1.0", optional: true},
 
       # Development and testing
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
