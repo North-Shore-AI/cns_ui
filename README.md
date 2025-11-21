@@ -1,6 +1,7 @@
+<div align="center"><img src="assets/cns_ui.svg" width="400" alt="CNS UI Logo" /></div>
+
 # CNS UI
 
-[![CI](https://github.com/North-Shore-AI/cns_ui/actions/workflows/ci.yml/badge.svg)](https://github.com/North-Shore-AI/cns_ui/actions/workflows/ci.yml)
 [![Hex.pm](https://img.shields.io/hexpm/v/cns_ui.svg)](https://hex.pm/packages/cns_ui)
 [![Documentation](https://img.shields.io/badge/docs-hexdocs-blue.svg)](https://hexdocs.pm/cns_ui)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
