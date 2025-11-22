@@ -12,12 +12,13 @@ defmodule CnsUi.Client do
     params = Keyword.get(opts, :filters, %{})
 
     instrument(:list_runs, %{params: params}, fn ->
-      with {:ok, base_url} <- fetch_base_url(opts) do
-        url = base_url <> "/v1/runs" <> query_string(params)
-        HTTP.get(url, http_opts(opts))
-      else
-        {:error, :missing_base_url} -> {:ok, stub_runs(params)}
-        error -> error
+      case fetch_base_url(opts) do
+        {:ok, base_url} ->
+          url = base_url <> "/v1/runs" <> query_string(params)
+          HTTP.get(url, http_opts(opts))
+
+        {:error, :missing_base_url} ->
+          {:ok, stub_runs(params)}
       end
     end)
   end
@@ -25,14 +26,12 @@ defmodule CnsUi.Client do
   @spec create_run(run_payload(), list_opts()) :: {:ok, map()} | {:error, term()}
   def create_run(payload, opts \\ []) when is_map(payload) do
     instrument(:create_run, %{payload: Map.take(payload, ["id", "name", "experiment_id"])}, fn ->
-      with {:ok, base_url} <- fetch_base_url(opts) do
-        HTTP.post(base_url <> "/v1/jobs", payload, http_opts(opts))
-      else
+      case fetch_base_url(opts) do
+        {:ok, base_url} ->
+          HTTP.post(base_url <> "/v1/jobs", payload, http_opts(opts))
+
         {:error, :missing_base_url} ->
           {:ok, Map.merge(%{"id" => "stub_run", "status" => "pending"}, payload)}
-
-        error ->
-          error
       end
     end)
   end
@@ -140,5 +139,4 @@ defmodule CnsUi.Client do
 
   defp result_flag({:ok, _}), do: :ok
   defp result_flag({:error, _}), do: :error
-  defp result_flag(_), do: :ok
 end

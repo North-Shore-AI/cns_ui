@@ -71,7 +71,8 @@ defmodule CnsUi.MixProject do
       {:plug_cowboy, "~> 2.5"},
 
       # CNS ecosystem
-      {:cns, github: "North-Shore-AI/cns", optional: true},
+      {:crucible_ui, path: "../crucible_ui"},
+      {:cns, path: "../cns"},
 
       # Development and testing
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
