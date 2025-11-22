@@ -9,6 +9,11 @@ on:
 
 env:
   MIX_ENV: test
+  POSTGRES_HOST: 127.0.0.1
+  POSTGRES_PORT: ${{ job.services.db.ports[5432] }}
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_DB: cns_ui_test
 
 jobs:
   test-and-dialyzer:
