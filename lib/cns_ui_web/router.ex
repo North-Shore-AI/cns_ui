@@ -35,7 +35,9 @@ defmodule CnsUiWeb.Router do
     live "/antagonist", AntagonistLive, :index
     live "/synthesizer", SynthesizerLive, :index
     live "/training", TrainingLive, :index
+    live "/runs/:id", RunLive, :show
     live "/metrics", MetricsLive, :index
+    live "/overlay", OverlayLive, :index
   end
 
   # Enable LiveDashboard in development

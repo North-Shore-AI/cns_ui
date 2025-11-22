@@ -37,3 +37,9 @@ if config_env() == :prod do
     ],
     secret_key_base: secret_key_base
 end
+
+# Crucible API + PubSub configuration
+config :cns_ui, :crucible_api,
+  url: System.get_env("CRUCIBLE_API_URL") || "http://localhost:4100",
+  token: System.get_env("CRUCIBLE_API_TOKEN"),
+  pubsub: System.get_env("CRUCIBLE_PUBSUB_NAME", "CrucibleUI.PubSub") |> String.to_atom()

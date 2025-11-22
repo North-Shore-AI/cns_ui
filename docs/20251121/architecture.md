@@ -4,6 +4,12 @@
 
 CNS UI is a Phoenix LiveView application that provides a real-time web interface for CNS (Critic-Network Synthesis) dialectical reasoning experiments. The architecture is designed around reactive UI updates, efficient data streaming, and seamless integration with the CNS core library.
 
+### Crucible Alignment
+
+- Training orchestration is delegated to Crucible Framework via `CnsUi.CrucibleClient` (configurable `CRUCIBLE_API_URL`/`CRUCIBLE_API_TOKEN`).
+- UI tiles pull styling from shared Crucible UI components so CNS-specific dashboards stay consistent with Crucible UI.
+- Run progress can stream from `CRUCIBLE_PUBSUB_NAME` (defaults to `CrucibleUI.PubSub` when co-deployed).
+
 ## System Architecture
 
 ```

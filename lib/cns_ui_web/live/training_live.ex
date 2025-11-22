@@ -5,12 +5,19 @@ defmodule CnsUiWeb.TrainingLive do
 
   use CnsUiWeb, :live_view
 
+  alias CnsUi.CrucibleClient
+  alias CrucibleUIWeb.Components, as: CrucibleComponents
+
   @impl true
   def mount(_params, _session, socket) do
     {:ok,
      socket
      |> assign(:page_title, "Training")
      |> assign(:step, 1)
+     |> assign(:submitting?, false)
+     |> assign(:job, nil)
+     |> assign(:job_status, nil)
+     |> assign(:job_progress, 0)
      |> assign(:config, %{
        dataset_path: "",
        model: "llama-7b",
@@ -35,13 +42,64 @@ defmodule CnsUiWeb.TrainingLive do
 
   @impl true
   def handle_event("update_config", %{"config" => config}, socket) do
-    {:noreply, assign(socket, :config, Map.merge(socket.assigns.config, atomize_keys(config)))}
+    updated_config =
+      socket.assigns.config
+      |> Map.merge(atomize_keys(config))
+      |> normalize_config()
+
+    {:noreply, assign(socket, :config, updated_config)}
   end
 
   @impl true
   def handle_event("start_training", _params, socket) do
-    # Placeholder for actual training start
-    {:noreply, put_flash(socket, :info, "Training configuration saved (not started)")}
+    payload = build_job_payload(socket.assigns.config)
+
+    socket = assign(socket, :submitting?, true)
+
+    case CrucibleClient.create_job(payload) do
+      {:ok, %{"id" => job_id} = job} ->
+        CrucibleClient.subscribe_job(job_id)
+
+        {:noreply,
+         socket
+         |> assign(:job, job)
+         |> assign(:job_status, Map.get(job, "status", "submitted"))
+         |> assign(:job_progress, to_float(Map.get(job, "progress", 0)))
+         |> assign(:step, 6)
+         |> assign(:submitting?, false)
+         |> put_flash(:info, "Crucible training job submitted (##{job_id})")
+         |> push_navigate(to: ~p"/runs/#{job_id}")}
+
+      {:ok, job} ->
+        {:noreply,
+         socket
+         |> assign(:job, job)
+         |> assign(:job_status, Map.get(job, "status", "submitted"))
+         |> assign(:job_progress, to_float(Map.get(job, "progress", 0)))
+         |> assign(:step, 6)
+         |> assign(:submitting?, false)
+         |> put_flash(:info, "Crucible training job submitted")
+         |> push_navigate(to: ~p"/runs/#{Map.get(job, "id", "unknown")}")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> assign(:submitting?, false)
+         |> put_flash(:error, "Failed to submit job: #{format_error(reason)}")}
+    end
+  end
+
+  @impl true
+  def handle_info({:training_update, %{job_id: job_id} = update}, socket) do
+    maybe_update_job(job_id, update, socket)
+  end
+
+  def handle_info({:crucible_training, %{job_id: job_id} = update}, socket) do
+    maybe_update_job(job_id, update, socket)
+  end
+
+  def handle_info(%{job_id: job_id} = update, socket) do
+    maybe_update_job(job_id, update, socket)
   end
 
   defp atomize_keys(map) do
@@ -62,6 +120,31 @@ defmodule CnsUiWeb.TrainingLive do
         Training Configuration
         <:subtitle>Step <%= @step %> of 6</:subtitle>
       </.header>
+
+      <%= if @job_status do %>
+        <div class="bg-white shadow rounded-lg p-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-sm text-gray-500">Crucible Job</p>
+              <p class="text-lg font-semibold text-gray-900">
+                <%= @job_status %>
+                <%= if @job && @job["id"], do: "(##{@job["id"]})" %>
+              </p>
+            </div>
+            <span class="text-xs px-2 py-1 rounded bg-blue-50 text-blue-700">
+              Synced with Crucible API
+            </span>
+          </div>
+          <div class="mt-4">
+            <CrucibleComponents.progress_bar
+              label="Progress"
+              percent={@job_progress}
+              tone="blue"
+              value={"#{Float.round(@job_progress, 1)}%"}
+            />
+          </div>
+        </div>
+      <% end %>
 
       <%!-- Progress bar --%>
       <div class="bg-white shadow rounded-lg p-4">
@@ -106,7 +189,12 @@ defmodule CnsUiWeb.TrainingLive do
             Previous
           </button>
           <%= if @step == 6 do %>
-            <button phx-click="start_training" class="px-4 py-2 bg-green-500 text-white rounded">
+            <button
+              phx-click="start_training"
+              class="px-4 py-2 bg-green-500 text-white rounded disabled:opacity-70"
+              disabled={@submitting?}
+              phx-disable-with="Submitting..."
+            >
               Start Training
             </button>
           <% else %>
@@ -306,9 +394,86 @@ defmodule CnsUiWeb.TrainingLive do
             <dt class="text-gray-500">Epochs:</dt>
             <dd><%= @config.epochs %></dd>
           </div>
+          <%= if @job_status do %>
+            <div class="flex justify-between">
+              <dt class="text-gray-500">Crucible Job Status:</dt>
+              <dd><%= @job_status %></dd>
+            </div>
+          <% end %>
         </dl>
       </div>
     </div>
     """
   end
+
+  defp build_job_payload(config) do
+    %{
+      dataset_path: config.dataset_path,
+      model: config.model,
+      lora: %{
+        rank: to_int(config.lora_rank),
+        alpha: to_int(config.lora_alpha),
+        dropout: to_float(config.lora_dropout),
+        citation_validity_weight: to_float(config.citation_validity_weight)
+      },
+      training: %{
+        learning_rate: to_float(config.learning_rate),
+        epochs: to_int(config.epochs)
+      },
+      metadata: %{
+        source: "cns_ui",
+        requested_at: DateTime.utc_now()
+      }
+    }
+  end
+
+  defp normalize_config(config) do
+    config
+    |> Map.update(:lora_rank, nil, &to_int/1)
+    |> Map.update(:lora_alpha, nil, &to_int/1)
+    |> Map.update(:lora_dropout, nil, &to_float/1)
+    |> Map.update(:citation_validity_weight, nil, &to_float/1)
+    |> Map.update(:learning_rate, nil, &to_float/1)
+    |> Map.update(:epochs, nil, &to_int/1)
+  end
+
+  defp to_int(value) when is_integer(value), do: value
+  defp to_int(value) when is_binary(value), do: String.to_integer(value)
+  defp to_int(value) when is_float(value), do: trunc(value)
+  defp to_int(_), do: 0
+
+  defp to_float(value) when is_float(value), do: value
+  defp to_float(value) when is_integer(value), do: value * 1.0
+
+  defp to_float(value) when is_binary(value) do
+    case Float.parse(value) do
+      {parsed, _} -> parsed
+      _ -> 0.0
+    end
+  end
+
+  defp to_float(_), do: 0.0
+
+  defp maybe_update_job(job_id, update, socket) do
+    cond do
+      socket.assigns.job && socket.assigns.job["id"] == job_id ->
+        progress =
+          Map.get(update, :progress) || Map.get(update, "progress") ||
+            socket.assigns.job_progress
+
+        status =
+          Map.get(update, :status) || Map.get(update, "status") || socket.assigns.job_status
+
+        {:noreply,
+         socket
+         |> assign(:job_status, status)
+         |> assign(:job_progress, to_float(progress))}
+
+      true ->
+        {:noreply, socket}
+    end
+  end
+
+  defp format_error({:http_error, status, body}), do: "HTTP #{status}: #{inspect(body)}"
+  defp format_error(reason), do: inspect(reason)
 end

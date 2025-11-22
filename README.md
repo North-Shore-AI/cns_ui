@@ -112,6 +112,9 @@ config :cns_ui,
 | `CNS_CORE_URL` | CNS core library endpoint | `http://localhost:4001` |
 | `PHX_HOST` | Application host | `localhost` |
 | `PORT` | Application port | `4000` |
+| `CRUCIBLE_API_URL` | Base URL for the Crucible Framework API | `http://localhost:4100` |
+| `CRUCIBLE_API_TOKEN` | Bearer token for Crucible API requests | _none_ |
+| `CRUCIBLE_PUBSUB_NAME` | PubSub name to listen for Crucible job updates | `CrucibleUI.PubSub` |
 
 ## Development
 
@@ -143,6 +146,13 @@ mix phx.server
 ```
 
 Visit [`localhost:4000`](http://localhost:4000) in your browser.
+
+### Crucible Integration
+
+- Training runs are submitted through `CnsUi.CrucibleClient` to Crucible (`/api/jobs`).
+- PubSub updates are consumed from the configured `CRUCIBLE_PUBSUB_NAME` (defaults to `CrucibleUI.PubSub` when co-deployed).
+- To point CNS UI at a remote Crucible deployment, set `CRUCIBLE_API_URL` and `CRUCIBLE_API_TOKEN` accordingly; no Tinkex configuration is required.
+- After submission, users are redirected to `/runs/:id` for live Crucible job status and telemetry.
 
 ### Running Tests
 
@@ -188,6 +198,11 @@ lib/
       visualization/ # Graph and chart components
     components/     # Reusable UI components
 ```
+
+Crucible alignment:
+- Training workflows delegate job orchestration to Crucible (`CnsUi.CrucibleClient`).
+- Metrics/tiles use the shared Crucible UI component styling to stay consistent with Crucible UI.
+- PubSub subscriptions can be pointed at a co-deployed Crucible instance for live run updates.
 
 For detailed architecture documentation, see [docs/20251121/architecture.md](docs/20251121/architecture.md).
 

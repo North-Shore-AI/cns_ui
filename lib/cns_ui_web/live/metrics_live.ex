@@ -6,6 +6,7 @@ defmodule CnsUiWeb.MetricsLive do
   use CnsUiWeb, :live_view
 
   alias CnsUi.{Metrics, Citations, Challenges}
+  alias CrucibleUIWeb.Components, as: CrucibleComponents
 
   @impl true
   def mount(_params, _session, socket) do
@@ -44,12 +45,32 @@ defmodule CnsUiWeb.MetricsLive do
         <:subtitle>CNS 3.0 metrics dashboard</:subtitle>
       </.header>
 
-      <%!-- Key Metrics --%>
+      <%!-- Key Metrics (shared Crucible components) --%>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <.metric_gauge title="Entailment" value={@avg_entailment} target={0.95} color="blue" />
-        <.metric_gauge title="Chirality" value={@avg_chirality} target={0.5} color="purple" />
-        <.metric_gauge title="Pass Rate" value={@avg_pass_rate} target={0.90} color="green" />
-        <.metric_gauge title="Citation Validity" value={@avg_validity} target={0.85} color="yellow" />
+        <CrucibleComponents.stat_card
+          title="Entailment"
+          value={format_percent(@avg_entailment)}
+          delta={target_delta(@avg_entailment, 0.95)}
+          tone="blue"
+        />
+        <CrucibleComponents.stat_card
+          title="Chirality"
+          value={format_percent(@avg_chirality)}
+          delta={target_delta(@avg_chirality, 0.5)}
+          tone="purple"
+        />
+        <CrucibleComponents.stat_card
+          title="Pass Rate"
+          value={format_percent(@avg_pass_rate)}
+          delta={target_delta(@avg_pass_rate, 0.90)}
+          tone="emerald"
+        />
+        <CrucibleComponents.stat_card
+          title="Citation Validity"
+          value={format_percent(@avg_validity)}
+          delta={target_delta(@avg_validity, 0.85)}
+          tone="amber"
+        />
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -58,19 +79,12 @@ defmodule CnsUiWeb.MetricsLive do
           <h3 class="text-lg font-semibold mb-4">Challenge Distribution</h3>
           <div class="space-y-3">
             <%= for severity <- ["critical", "high", "medium", "low"] do %>
-              <div class="flex items-center">
-                <span class="w-20 text-sm"><%= severity %></span>
-                <div class="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    class={"h-full #{severity_bar_color(severity)}"}
-                    style={"width: #{bar_width(@challenge_counts, severity)}%"}
-                  >
-                  </div>
-                </div>
-                <span class="w-8 text-right text-sm">
-                  <%= Map.get(@challenge_counts, severity, 0) %>
-                </span>
-              </div>
+              <CrucibleComponents.progress_bar
+                label={String.capitalize(severity)}
+                percent={bar_width(@challenge_counts, severity)}
+                value={Integer.to_string(Map.get(@challenge_counts, severity, 0))}
+                tone={severity_tone(severity)}
+              />
             <% end %>
           </div>
         </div>
@@ -108,57 +122,6 @@ defmodule CnsUiWeb.MetricsLive do
     """
   end
 
-  defp metric_gauge(assigns) do
-    value = assigns.value || 0
-    percentage = if is_number(value), do: value * 100, else: 0
-    on_target = percentage >= assigns.target * 100
-
-    colors = %{
-      "blue" => "text-blue-600",
-      "purple" => "text-purple-600",
-      "green" => "text-green-600",
-      "yellow" => "text-yellow-600"
-    }
-
-    assigns =
-      assigns
-      |> assign(:percentage, percentage)
-      |> assign(:on_target, on_target)
-      |> assign(:text_color, Map.get(colors, assigns.color, "text-gray-600"))
-
-    ~H"""
-    <div class="bg-white shadow rounded-lg p-6">
-      <h4 class="text-sm font-medium text-gray-500"><%= @title %></h4>
-      <div class="mt-2 flex items-baseline">
-        <span class={"text-3xl font-bold #{@text_color}"}>
-          <%= Float.round(@percentage, 1) %>%
-        </span>
-        <span class={"ml-2 text-xs #{if @on_target, do: "text-green-500", else: "text-red-500"}"}>
-          <%= if @on_target, do: "On target", else: "Below target" %>
-        </span>
-      </div>
-      <div class="mt-2 h-2 bg-gray-200 rounded-full">
-        <div
-          class={"h-2 rounded-full #{if @on_target, do: "bg-green-500", else: "bg-red-400"}"}
-          style={"width: #{min(@percentage, 100)}%"}
-        >
-        </div>
-      </div>
-      <p class="mt-1 text-xs text-gray-400">Target: <%= @target * 100 %>%</p>
-    </div>
-    """
-  end
-
-  defp severity_bar_color(severity) do
-    case severity do
-      "critical" -> "bg-red-500"
-      "high" -> "bg-orange-500"
-      "medium" -> "bg-yellow-500"
-      "low" -> "bg-gray-400"
-      _ -> "bg-gray-300"
-    end
-  end
-
   defp bar_width(counts, severity) do
     count = Map.get(counts, severity, 0)
     total = counts |> Map.values() |> Enum.sum()
@@ -168,4 +131,32 @@ defmodule CnsUiWeb.MetricsLive do
   defp format_metric(nil), do: "N/A"
   defp format_metric(value) when is_float(value), do: Float.round(value, 4)
   defp format_metric(value), do: to_string(value)
+
+  defp format_percent(nil), do: "N/A"
+
+  defp format_percent(value) when is_number(value) do
+    (value * 100) |> Float.round(1) |> then(&"#{&1}%")
+  end
+
+  defp format_percent(value), do: to_string(value)
+
+  defp target_delta(nil, _target), do: nil
+
+  defp target_delta(value, target) when is_number(value) do
+    delta = Float.round((value - target) * 100, 1)
+
+    cond do
+      delta > 0 -> "+#{delta}% vs target"
+      delta < 0 -> "#{delta}% vs target"
+      true -> "On target"
+    end
+  end
+
+  defp target_delta(_, _), do: nil
+
+  defp severity_tone("critical"), do: "amber"
+  defp severity_tone("high"), do: "purple"
+  defp severity_tone("medium"), do: "blue"
+  defp severity_tone("low"), do: "slate"
+  defp severity_tone(_), do: "slate"
 end

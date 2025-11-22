@@ -42,4 +42,8 @@ config :logger, :console,
 
 config :phoenix, :json_library, Jason
 
+config :cns_ui, :cns_client, adapter: CnsUi.CNS.StubAdapter
+
+config :cns_ui, :client, []
+
 import_config "#{config_env()}.exs"
