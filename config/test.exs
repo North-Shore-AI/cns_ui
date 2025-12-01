@@ -21,6 +21,16 @@ config :cns_ui, CnsUi.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10
 
+# Configure CrucibleUI.Repo (from crucible_ui dependency)
+config :crucible_ui, CrucibleUI.Repo,
+  username: test_db_user,
+  password: test_db_pass,
+  hostname: test_db_host,
+  port: test_db_port,
+  database: "crucible_ui_test#{test_db_partition}",
+  pool: Ecto.Adapters.SQL.Sandbox,
+  pool_size: 10
+
 config :cns_ui, CnsUiWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
   secret_key_base:
@@ -30,3 +40,10 @@ config :cns_ui, CnsUiWeb.Endpoint,
 config :logger, level: :warning
 
 config :phoenix, :plug_init_mode, :runtime
+
+# Configure CrucibleUIWeb.Endpoint (from crucible_ui dependency)
+config :crucible_ui, CrucibleUIWeb.Endpoint,
+  http: [ip: {127, 0, 0, 1}, port: 4003],
+  secret_key_base:
+    "test_secret_key_base_crucible_ui_at_least_64_bytes_long_for_security_purposes",
+  server: false

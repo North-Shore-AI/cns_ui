@@ -3,7 +3,7 @@ defmodule CnsUi.DependencyIntegrationTest do
   Tests to verify proper dependency structure:
   - cns_ui depends on crucible_ui
   - cns_ui depends on cns
-  - crucible_ui depends on crucible_framework
+  - crucible_ui depends on crucible_telemetry
   """
   use ExUnit.Case, async: true
 
@@ -24,15 +24,12 @@ defmodule CnsUi.DependencyIntegrationTest do
       assert Code.ensure_loaded?(CNS.Application)
     end
 
-    test "crucible_framework is available through crucible_ui" do
-      # Verify crucible_framework is accessible (transitive dependency)
-      assert {:ok, _} = Application.ensure_all_started(:crucible_framework)
-
-      # Verify key modules from crucible_framework
-      assert Code.ensure_loaded?(CrucibleFramework)
+    test "crucible_telemetry is available through crucible_ui" do
+      # Verify crucible_telemetry is accessible (transitive dependency)
+      assert {:ok, _} = Application.ensure_all_started(:crucible_telemetry)
     end
 
-    test "dependency chain is correct: cns_ui -> crucible_ui -> crucible_framework" do
+    test "dependency chain is correct: cns_ui -> crucible_ui -> crucible_telemetry" do
       # Get the dependencies for cns_ui
       cns_ui_deps = Application.spec(:cns_ui, :applications) || []
 
@@ -47,9 +44,9 @@ defmodule CnsUi.DependencyIntegrationTest do
       # Get the dependencies for crucible_ui
       crucible_ui_deps = Application.spec(:crucible_ui, :applications) || []
 
-      # crucible_ui should depend on crucible_framework
-      assert :crucible_framework in crucible_ui_deps,
-             "crucible_ui should depend on crucible_framework, got: #{inspect(crucible_ui_deps)}"
+      # crucible_ui should depend on crucible_telemetry
+      assert :crucible_telemetry in crucible_ui_deps,
+             "crucible_ui should depend on crucible_telemetry, got: #{inspect(crucible_ui_deps)}"
     end
   end
 end
