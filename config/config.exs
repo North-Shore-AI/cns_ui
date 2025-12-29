@@ -46,4 +46,15 @@ config :cns_ui, :cns_client, adapter: CnsUi.CNS.StubAdapter
 
 config :cns_ui, :client, []
 
+# Labeling backend configuration
+# Mode: :local (default, uses CnsUi.SNOs) or :anvil (uses Ingot.AnvilClient)
+config :cns_ui, :labeling_mode, :local
+
+# Ingot AnvilClient configuration (when using :anvil mode)
+# Delegates to Ingot's AnvilClient for actual HTTP communication
+config :ingot,
+  anvil_client_adapter: Ingot.AnvilClient.MockAdapter,
+  anvil_base_url: "http://localhost:4101",
+  default_tenant_id: "cns_ui"
+
 import_config "#{config_env()}.exs"

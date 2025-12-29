@@ -1,7 +1,7 @@
 defmodule CnsUi.MixProject do
   use Mix.Project
 
-  @version "0.1.0"
+  @version "0.2.0"
   @source_url "https://github.com/North-Shore-AI/cns_ui"
 
   def project do
@@ -53,7 +53,7 @@ defmodule CnsUi.MixProject do
       {:phoenix_ecto, "~> 4.4"},
       {:ecto_sql, "~> 3.10"},
       {:postgrex, ">= 0.0.0"},
-      {:phoenix_html, "~> 3.3"},
+      {:phoenix_html, "~> 4.1"},
       {:phoenix_live_reload, "~> 1.4", only: :dev},
       {:phoenix_live_view, "~> 0.20.1"},
       {:floki, ">= 0.30.0", only: :test},
@@ -63,7 +63,7 @@ defmodule CnsUi.MixProject do
       {:heroicons, "~> 0.5"},
       {:swoosh, "~> 1.3"},
       {:finch, "~> 0.13"},
-      {:telemetry_metrics, "~> 0.6"},
+      {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
@@ -71,6 +71,7 @@ defmodule CnsUi.MixProject do
       {:plug_cowboy, "~> 2.5"},
 
       # CNS ecosystem
+      {:ingot, path: "../ingot"},
       {:crucible_ui, path: "../crucible_ui"},
       {:cns, path: "../cns"},
 

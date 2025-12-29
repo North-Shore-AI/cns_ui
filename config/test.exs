@@ -47,3 +47,12 @@ config :crucible_ui, CrucibleUIWeb.Endpoint,
   secret_key_base:
     "test_secret_key_base_crucible_ui_at_least_64_bytes_long_for_security_purposes",
   server: false
+
+# Always use local mode for tests
+config :cns_ui, :labeling_mode, :local
+
+# Use mock adapter for Ingot in tests
+config :ingot,
+  anvil_client_adapter: Ingot.AnvilClient.MockAdapter,
+  anvil_base_url: "http://localhost:4101",
+  default_tenant_id: "cns_ui"

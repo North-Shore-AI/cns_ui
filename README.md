@@ -154,6 +154,144 @@ Visit [`localhost:4000`](http://localhost:4000) in your browser.
 - To point CNS UI at a remote Crucible deployment, set `CRUCIBLE_API_URL` and `CRUCIBLE_API_TOKEN` accordingly; no Tinkex configuration is required.
 - After submission, users are redirected to `/runs/:id` for live Crucible job status and telemetry.
 
+### Composable Feature Routes
+
+CNS UI integrates two composable feature libraries via custom backend implementations:
+
+#### Labeling Routes (from Ingot)
+
+**Mounted at:** `/labeling`
+**Backend:** `CnsUi.LabelingBackend` ([lib/cns_ui/labeling_backend.ex](/home/home/p/g/North-Shore-AI/cns_ui/lib/cns_ui/labeling_backend.ex))
+
+Provides SNO annotation workflows aligned with CNS 3.0 agent architecture:
+
+**Available Queues:**
+
+| Queue ID | Purpose | Status | Validates |
+|----------|---------|--------|-----------|
+| `sno_validation` | Validate Proposer agent output | Production | Claim grounding, citation accuracy, entailment scores |
+| `antagonist_review` | Review Antagonist contradiction flags | Planned | β₁ gaps, chirality scores, contradiction precision |
+| `synthesis_verification` | Verify Synthesizer output quality | Planned | β₁ reduction, topological coherence, evidence integration |
+
+**Key Routes:**
+- `GET /labeling/queue/:queue_id` - Queue dashboard with statistics
+- `GET /labeling/assignment/:id` - Label assignment view with schema
+- `POST /labeling/labels` - Submit label (updates SNO status)
+
+**Backend Implementation Highlights:**
+
+```elixir
+# CnsUi.LabelingBackend implements Ingot.Labeling.Backend
+@behaviour Ingot.Labeling.Backend
+
+# Core callbacks:
+def get_next_assignment(queue_id, user_id, opts)  # Returns next SNO/flag/synthesis
+def submit_label(assignment_id, label_data, opts) # Stores label, updates status
+def get_queue_stats(queue_id, opts)               # Aggregate statistics
+def check_queue_access(user_id, queue_id, opts)   # Future: RBAC
+
+# Integration with CNS contexts:
+- CnsUi.SNOs - SNO data management (status updates, metadata)
+- Future: CnsUi.AntagonistFlags, CnsUi.SynthesisCandidates
+
+# Telemetry events emitted:
+- [:cns_ui, :labeling, :assignment, :fetched]
+- [:cns_ui, :labeling, :label, :submitted]
+- [:cns_ui, :labeling, :queue, :stats]
+```
+
+**Example Usage:**
+
+```bash
+# Navigate to SNO validation queue
+open http://localhost:4000/labeling/queue/sno_validation
+
+# System assigns next pending SNO
+# Reviewer validates:
+# - Citation accuracy (references exist, support claim polarity)
+# - Grounding score (entailment ≥ 0.75)
+# - Semantic similarity (cosine ≥ 0.7)
+
+# Submit label → SNO status updates:
+# "accept" → "validated"
+# "reject" → "rejected"
+# "needs_review" → flags for domain expert
+```
+
+#### Experiment Routes (from Crucible UI)
+
+**Mounted at:** `/crucible/experiments`
+**Backend:** `CnsUi.ExperimentBackend` ([lib/cns_ui/experiment_backend.ex](/home/home/p/g/North-Shore-AI/cns_ui/lib/cns_ui/experiment_backend.ex))
+
+Provides standardized experiment dashboards integrated with CNS training workflows:
+
+**Key Routes:**
+- `GET /crucible/experiments` - List all CNS experiments
+- `GET /crucible/experiments/:id` - Experiment detail with training runs
+- `GET /crucible/experiments/:id/runs` - Run list for experiment
+- `GET /crucible/experiments/runs/:id` - Individual run monitoring
+
+**Backend Implementation Highlights:**
+
+```elixir
+# CnsUi.ExperimentBackend implements Crucible.UI.Backend
+@behaviour Crucible.UI.Backend
+
+# Core callbacks:
+def list_experiments(opts)                     # Filter by status, limit
+def get_experiment_with_associations(id)       # Preloads training runs
+def create_experiment(attrs)                   # New experiment creation
+def list_runs(experiment_id, opts)             # Runs for experiment
+def get_statistics(id)                         # Run/experiment stats
+def get_system_statistics()                    # System-wide aggregates
+
+# Integration with CNS contexts:
+- CnsUi.Experiments - Experiment CRUD, status tracking
+- CnsUi.Training - Training run management, metrics storage
+
+# Telemetry events emitted:
+- [:cns_ui, :experiment, :listed]
+- [:cns_ui, :experiment, :created]
+- [:cns_ui, :experiment, :updated]
+- [:cns_ui, :run, :listed]
+- [:cns_ui, :run, :fetched]
+- [:cns_ui, :stats, :computed]
+- [:cns_ui, :stats, :system]
+
+# PubSub topics for real-time updates:
+- "cns:experiment:{id}" - Experiment-level events
+- "cns:run:{id}" - Run-level events (loss, metrics, checkpoints)
+```
+
+**Example Usage:**
+
+```bash
+# List all experiments
+open http://localhost:4000/crucible/experiments
+
+# View specific experiment with runs
+open http://localhost:4000/crucible/experiments/123
+
+# Monitor individual training run
+open http://localhost:4000/crucible/experiments/runs/456
+
+# Real-time updates via PubSub:
+# - Loss curves streaming from Crucible Framework
+# - Checkpoint creation notifications
+# - Metric snapshot updates (entailment, similarity, β₁)
+```
+
+**Relationship to Native Routes:**
+
+CNS UI provides **both** native (`/experiments`) and Crucible UI (`/crucible/experiments`) routes:
+
+| Route | Purpose | Use When |
+|-------|---------|----------|
+| `/experiments` | CNS-specific experiment creation/editing | Creating new experiments, configuring CNS agents, setting quality thresholds |
+| `/crucible/experiments` | Standardized experiment monitoring | Viewing run statistics, comparing experiments, exporting results |
+
+Both share the same backend data (`CnsUi.Experiments`, `CnsUi.Training`) but provide different UIs optimized for different workflows.
+
 ### Running Tests
 
 ```bash

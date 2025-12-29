@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Integration with Ingot.Labeling for SNO annotation at `/labeling`
+- Integration with Crucible.UI for experiment dashboard at `/crucible/experiments`
+- `CnsUi.LabelingBackend` - CNS-specific labeling operations backend
+- `CnsUi.ExperimentBackend` - CNS-specific experiment operations backend
+- Router now uses composable routes from ingot and crucible_ui
+- Support for three labeling queues: sno_validation, antagonist_review, synthesis_verification
+- Documentation for new labeling and experiment routes in README
+
+### Changed
+
+- Updated `phoenix_html` from ~> 3.3 to ~> 4.1 for compatibility with ingot
+- Updated `telemetry_metrics` from ~> 0.6 to ~> 1.0 for compatibility with ingot
+- Router now imports `Ingot.Labeling.Router` and `Crucible.UI.Router`
+
 ## [0.1.0] - 2024-11-21
 
 ### Added
