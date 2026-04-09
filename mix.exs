@@ -113,7 +113,7 @@ defmodule CnsUi.MixProject do
   defp package do
     [
       name: "cns_ui",
-      files: ~w(lib priv .formatter.exs mix.exs README.md LICENSE CHANGELOG.md),
+      files: ~w(lib priv .formatter.exs mix.exs README.md LICENSE CHANGELOG.md docs),
       maintainers: ["North-Shore-AI"],
       licenses: ["Apache-2.0"],
       links: %{
